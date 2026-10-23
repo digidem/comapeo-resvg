@@ -5,7 +5,7 @@
 const fs = require('node:fs')
 const path = require('node:path')
 const { monitorEventLoopDelay } = require('node:perf_hooks')
-const { render } = require('comapeo-resvg')
+const { render } = require('@comapeo/resvg')
 
 const iconsDir = path.join(__dirname, 'icons')
 const icons = fs

@@ -7,7 +7,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 const test = require('node:test')
 const { PNG } = require('pngjs')
-const { render } = require('comapeo-resvg')
+const { render } = require('@comapeo/resvg')
 
 // 15 and 20 dp at 1x, 1.5x, 2x, 3x and 4x.
 const SIZES = [15, 20, 23, 30, 40, 45, 60, 80]

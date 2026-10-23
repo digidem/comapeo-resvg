@@ -1,5 +1,5 @@
 {
-  "name": "comapeo-resvg",
+  "name": "@comapeo/resvg",
   "version": "1.0.0",
   "description": "Minimal Node.js bindings for resvg: render SVG to PNG",
   "keywords": [
@@ -35,6 +35,9 @@
     "prebuilds",
     "THIRD-PARTY-NOTICES.txt"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "node-gyp-build": "^4.8.4"
   },

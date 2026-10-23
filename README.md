@@ -1,4 +1,4 @@
-# comapeo-resvg
+# @comapeo/resvg
 
 Minimal Node.js bindings for [resvg](https://github.com/linebender/resvg):
 one function that renders an SVG to a PNG. resvg's text and image support is
@@ -10,7 +10,7 @@ Maintained by Awana Digital for CoMapeo.
 ## Usage
 
 ```js
-import { render } from "comapeo-resvg";
+import { render } from "@comapeo/resvg";
 
 const png = await render(svg, { width: 60, height: 60 }); // Buffer holding a PNG
 ```

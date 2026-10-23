@@ -21,7 +21,7 @@ case "$TARGET" in
 esac
 
 rm -rf "$PROJECT"
-PKG="$PROJECT/node_modules/comapeo-resvg"
+PKG="$PROJECT/node_modules/@comapeo/resvg"
 mkdir -p "$PKG/prebuilds/$DIR"
 cp "$REPO/package.json" "$REPO/index.js" "$PKG/"
 cp "$PREBUILD" "$PKG/prebuilds/$DIR/"
