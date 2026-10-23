@@ -1,0 +1,46 @@
+{
+  "name": "comapeo-resvg",
+  "version": "1.0.0",
+  "description": "Minimal Node.js bindings for resvg: render SVG to PNG",
+  "keywords": [
+    "svg",
+    "png",
+    "resvg",
+    "render",
+    "napi"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/digidem/comapeo-resvg.git"
+  },
+  "license": "MIT",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  },
+  "scripts": {
+    "test": "node test/test.js",
+    "test:update": "node --test-update-snapshots test/test.js",
+    "bench": "node test/bench.js",
+    "changeset": "changeset",
+    "release": "changeset publish"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "prebuilds",
+    "THIRD-PARTY-NOTICES.txt"
+  ],
+  "dependencies": {
+    "node-gyp-build": "^4.8.4"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^1.0.1",
+    "@changesets/cli": "^3.0.3",
+    "pngjs": "^7.0.0"
+  }
+}

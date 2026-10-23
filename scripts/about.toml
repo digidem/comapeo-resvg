@@ -1,0 +1,54 @@
+# cargo-about config for scripts/notices.sh. MIT comes first so every
+# "MIT OR ..." crate is listed under MIT.
+accepted = ["MIT", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib", "Unicode-3.0"]
+targets = [
+  "aarch64-apple-darwin",
+  "x86_64-apple-darwin",
+  "x86_64-unknown-linux-gnu",
+  "x86_64-pc-windows-msvc",
+  "aarch64-apple-ios",
+  "aarch64-apple-ios-sim",
+  "aarch64-linux-android",
+  "armv7-linux-androideabi",
+  "x86_64-linux-android",
+]
+ignore-build-dependencies = true
+ignore-dev-dependencies = true
+private = { ignore = true }
+
+[windows-link.clarify]
+license = "MIT"
+[[windows-link.clarify.files]]
+path = "license-mit"
+license = "MIT"
+checksum = "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+
+# The napi-rs crates ship without a license file, so cargo-about fetches the
+# repository's from the commit each was published from.
+[napi.clarify]
+license = "MIT"
+[[napi.clarify.git]]
+path = "LICENSE"
+license = "MIT"
+checksum = "3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215"
+
+[napi-sys.clarify]
+license = "MIT"
+[[napi-sys.clarify.git]]
+path = "LICENSE"
+license = "MIT"
+checksum = "3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215"
+
+[napi-derive.clarify]
+license = "MIT"
+[[napi-derive.clarify.git]]
+path = "LICENSE"
+license = "MIT"
+checksum = "3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215"
+
+[napi-derive-backend.clarify]
+license = "MIT"
+[[napi-derive-backend.clarify.git]]
+path = "LICENSE"
+license = "MIT"
+checksum = "3f1ce66533302df3a32edbfdfc0b78f0dd34659e4c1f5817162e5ea3c2297215"

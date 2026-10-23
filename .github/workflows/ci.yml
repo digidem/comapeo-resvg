@@ -1,0 +1,188 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  # release.yml runs the whole pipeline before packing a release.
+  workflow_call:
+
+concurrency:
+  # Called from release.yml, github.workflow is "Release"; the ci- prefix keeps
+  # this group apart from the caller's, which would otherwise deadlock.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-26, macos-15-intel, ubuntu-22.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: scripts/build.sh host
+      - run: npm test
+      - name: Check THIRD-PARTY-NOTICES.txt is current
+        if: runner.os == 'Linux'
+        run: |
+          cargo install cargo-about --version 0.9.2 --locked --features cli
+          scripts/notices.sh
+          git diff --exit-code THIRD-PARTY-NOTICES.txt
+      - name: Test in Electron
+        run: npx --yes electron@43.5.0 test/test.js
+        env:
+          ELECTRON_RUN_AS_NODE: '1'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: prebuilds-${{ matrix.os }}
+          path: prebuilds/
+
+  mobile:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install NDK and cargo-ndk
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" > /dev/null
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+          cargo install cargo-ndk --version 4.1.2 --locked
+      - run: scripts/fetch-runtime.sh
+      - run: |
+          for target in ios-arm64 ios-arm64-simulator android-arm64 android-arm android-x64; do
+            scripts/build.sh "$target"
+          done
+      - uses: actions/upload-artifact@v7
+        with:
+          name: prebuilds-mobile
+          path: prebuilds/
+
+  # The harness's reusable test workflows install the module from npm and take a
+  # single test file, so these run the same harness through scripts/run-*.sh.
+  # Not on pull requests, to save macOS minutes.
+  test-ios:
+    if: github.event_name != 'pull_request'
+    needs: mobile
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      HARNESS_REPO: ${{ github.workspace }}/harness
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: digidem/nodejs-mobile-bare-prebuilds
+          ref: v3
+          path: harness
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm ci
+      - uses: actions/download-artifact@v8
+        with:
+          name: prebuilds-mobile
+          path: prebuilds
+      - run: scripts/fetch-runtime.sh ios
+      - run: scripts/assemble-project.sh ios-arm64-simulator
+      - run: scripts/run-ios.sh
+
+  test-android:
+    if: github.event_name != 'pull_request'
+    needs: mobile
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # nodejs-mobile's oldest supported Android, and the harness's default.
+        include:
+          - { api-level: 24, target: google_apis, ram: 2048M }
+          - { api-level: 30, target: google_atd, ram: 4096M }
+    name: test-android (API ${{ matrix.api-level }})
+    env:
+      HARNESS_REPO: ${{ github.workspace }}/harness
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: digidem/nodejs-mobile-bare-prebuilds
+          ref: v3
+          path: harness
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
+        with:
+          gradle-version: '8.9'
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - run: npm ci
+      - uses: actions/download-artifact@v8
+        with:
+          name: prebuilds-mobile
+          path: prebuilds
+      - run: scripts/fetch-runtime.sh android
+      - run: scripts/assemble-project.sh android-x64
+      # The older emulator images sometimes fail to boot or hang, so a stuck run
+      # stops after 15 minutes and is tried once more on a fresh emulator.
+      - id: emulator
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
+        timeout-minutes: 15
+        continue-on-error: true
+        with: &emulator
+          api-level: ${{ matrix.api-level }}
+          target: ${{ matrix.target }}
+          arch: x86_64
+          ram-size: ${{ matrix.ram }}
+          # The image's default 7 GB data partition doesn't fit on the runner's disk.
+          disk-size: 4096M
+          emulator-boot-timeout: 300
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: false
+          script: scripts/run-android.sh x86_64
+      - name: Stop the first emulator
+        if: steps.emulator.outcome == 'failure'
+        run: |
+          pkill -f qemu-system || true
+          "$ANDROID_HOME/platform-tools/adb" kill-server || true
+      - if: steps.emulator.outcome == 'failure'
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
+        timeout-minutes: 15
+        with: *emulator
+
+  package:
+    needs: [desktop, mobile, test-ios, test-android]
+    # Still runs when the simulator and emulator jobs are skipped.
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: prebuilds-*
+          path: prebuilds
+          merge-multiple: true
+      - run: scripts/check-prebuilds.sh
+      - run: npm pack
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package
+          path: comapeo-resvg-*.tgz

@@ -1,0 +1,24 @@
+[package]
+name = "comapeo-resvg"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Without the default dyn-symbols, napi_* resolve by linking libnode or NodeMobile (scripts/build.sh).
+napi = { version = "3.14.2", default-features = false, features = ["napi4"] }
+napi-derive = "3.6.12"
+png = "0.18.1"
+resvg = { version = "0.48.1", default-features = false }
+
+[build-dependencies]
+napi-build = "2.6.0"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = "symbols"

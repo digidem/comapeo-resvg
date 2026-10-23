@@ -1,0 +1,7 @@
+target/
+node_modules/
+prebuilds/
+vendor-runtime/
+nodejs-project/
+.harness/
+.DS_Store
