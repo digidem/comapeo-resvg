@@ -181,18 +181,24 @@ test('repeated renders do not leak memory', { skip: updating }, async (t) => {
 
   // The allocator holds on to memory as the thread pool warms up, so measure after that.
   for (let i = 0; i < 4; i++) await batch()
-  const before = await settle()
-  for (let i = 0; i < 4; i++) await batch()
-  const after = await settle()
+  const samples = [await settle()]
+  for (let i = 0; i < 5; i++) {
+    await batch()
+    samples.push(await settle())
+  }
 
-  // 800 renders and 400 failures: a leaked PNG, image or input would add hundreds of MB,
-  // though macOS, iOS and Android compress idle memory. external only shows Buffers that
-  // JavaScript still holds, so leaks in Rust need RSS.
+  // Each batch is 200 renders and 100 failures: a leaked PNG, image or input would add
+  // 100 MB or more per batch, though macOS, iOS and Android compress idle memory. external
+  // only shows Buffers that JavaScript still holds, so leaks in Rust need RSS.
   const mb = (bytes) => (bytes / 1024 / 1024).toFixed(1)
-  const external = after.external - before.external
-  const rss = after.rss - before.rss
-  t.diagnostic(`RSS grew by ${mb(rss)} MB`)
+  const external = samples.at(-1).external - samples[0].external
+  const steps = samples.slice(1).map((s, i) => s.rss - samples[i].rss)
+  const big = steps.filter((step) => step >= 25 * 1024 * 1024).length
+  t.diagnostic(`RSS change per batch: ${steps.map(mb).join(', ')} MB`)
   // A few of the last 1 MB PNGs may still be waiting for the garbage collector.
   assert.ok(external < 16 * 1024 * 1024, `PNG buffers grew by ${mb(external)} MB`)
-  assert.ok(rss < 50 * 1024 * 1024, `RSS grew by ${mb(rss)} MB`)
+  // Allocators also move RSS by tens of MB, up or down (glibc's per-thread arenas, Windows
+  // trimming the working set, macOS compressing or swapping), so a single big batch or the
+  // total proves little. A leak shows as big growth in most batches.
+  assert.ok(big < 3, `RSS grew by 25 MB or more in ${big} of ${steps.length} batches`)
 })
