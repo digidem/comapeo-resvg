@@ -68,10 +68,7 @@ jobs:
 
   # The harness's reusable test workflows install the module from npm and take a
   # single test file, so these run the same harness through scripts/run-*.sh.
-  # Not on pull requests, to save macOS minutes, except the version PR, so a release
-  # isn't blocked on main after it has been approved.
   test-ios:
-    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'changeset-release/')
     needs: mobile
     runs-on: macos-26
     timeout-minutes: 30
@@ -98,7 +95,6 @@ jobs:
       - run: scripts/run-ios.sh
 
   test-android:
-    if: github.event_name != 'pull_request' || startsWith(github.head_ref, 'changeset-release/')
     needs: mobile
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -169,22 +165,8 @@ jobs:
         timeout-minutes: 15
         with: *emulator
 
-  # The required check for the two jobs above. A skipped matrix job reports under an
-  # unexpanded name, so the ruleset can't require test-android directly.
-  device-tests:
-    needs: [test-ios, test-android]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          for result in ${{ needs.test-ios.result }} ${{ needs.test-android.result }}; do
-            case "$result" in success | skipped) ;; *) exit 1 ;; esac
-          done
-
   package:
     needs: [desktop, mobile, test-ios, test-android]
-    # Still runs when the simulator and emulator jobs are skipped.
-    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
