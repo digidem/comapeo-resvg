@@ -68,9 +68,7 @@ jobs:
 
   # The harness's reusable test workflows install the module from npm and take a
   # single test file, so these run the same harness through scripts/run-*.sh.
-  # Not on pull requests, to save macOS minutes.
   test-ios:
-    if: github.event_name != 'pull_request'
     needs: mobile
     runs-on: macos-26
     timeout-minutes: 30
@@ -97,7 +95,6 @@ jobs:
       - run: scripts/run-ios.sh
 
   test-android:
-    if: github.event_name != 'pull_request'
     needs: mobile
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -170,8 +167,6 @@ jobs:
 
   package:
     needs: [desktop, mobile, test-ios, test-android]
-    # Still runs when the simulator and emulator jobs are skipped.
-    if: ${{ !failure() && !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
