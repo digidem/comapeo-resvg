@@ -43,5 +43,6 @@ Median times from `npm run bench`, all with `'fast'` compression:
 | all 36 icons at 60 px, at once | 1.9 ms | 2.0 ms | 2.9 ms |
 | JavaScript-thread time per call, icon | 0.005 ms | 0.005 ms | 0.021 ms |
 
-`BENCH=1 scripts/assemble-project.sh <target>` followed by a run script
-runs the benchmarks on a simulator or emulator instead of the tests.
+`npx nodejs-mobile-test <ios|android> nodejs-project --entry bench.js`, after
+`scripts/assemble-project.sh <target>`, runs the benchmarks on a simulator or
+emulator; the README has the full commands.

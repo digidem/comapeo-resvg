@@ -93,19 +93,22 @@ npm test
 npm run bench
 ```
 
-Running on an iOS simulator or Android emulator also needs rsync and a
-[nodejs-mobile-bare-prebuilds](https://github.com/digidem/nodejs-mobile-bare-prebuilds)
-checkout next to this repository (or set `HARNESS_REPO`). iOS needs Xcode.
-Android needs `cargo-ndk` (`cargo install cargo-ndk`), the SDK with NDK 27.2,
-an emulator image, Gradle on the `PATH`, bash 4 or later and GNU `timeout`
-(on macOS, `brew install bash coreutils`).
+Running on an iOS simulator or Android emulator uses
+[nodejs-mobile-test-harness](https://github.com/digidem/nodejs-mobile-test-harness),
+installed by `npm install`. iOS needs Xcode. Android needs `cargo-ndk`
+(`cargo install cargo-ndk`), the SDK with NDK 27.2, an emulator image or a
+device, and Java 17; the harness's README lists what its test app needs.
 
 ```sh
 scripts/fetch-runtime.sh                          # nodejs-mobile runtimes -> vendor-runtime/
 scripts/build.sh ios-arm64-simulator              # or android-arm64, android-x64, ...
-scripts/assemble-project.sh ios-arm64-simulator   # BENCH=1 runs the benchmarks instead of the tests
-scripts/run-ios.sh                                # or scripts/run-android.sh
+scripts/assemble-project.sh ios-arm64-simulator   # or android-arm64, ...
+npx nodejs-mobile-test ios nodejs-project --runtime-dir vendor-runtime/ios
+npx nodejs-mobile-test android nodejs-project --runtime-dir vendor-runtime/android
 ```
+
+Add `--entry bench.js` to run the benchmarks instead of the tests. On
+Android, `--avd <name>` boots an emulator when no device is attached.
 
 The tests render the icons in `test/icons/` and compare them with
 `test/snapshots/`, and render a sample of resvg's own tests for filters,
