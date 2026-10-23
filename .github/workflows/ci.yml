@@ -119,11 +119,11 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 17
-      - uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           gradle-version: '8.9'
       - name: Enable KVM
@@ -141,7 +141,7 @@ jobs:
       # The older emulator images sometimes fail to boot or hang, so a stuck run
       # stops after 15 minutes and is tried once more on a fresh emulator.
       - id: emulator
-        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         timeout-minutes: 15
         continue-on-error: true
         with: &emulator
@@ -161,7 +161,7 @@ jobs:
           pkill -f qemu-system || true
           "$ANDROID_HOME/platform-tools/adb" kill-server || true
       - if: steps.emulator.outcome == 'failure'
-        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.37.0
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         timeout-minutes: 15
         with: *emulator
 
