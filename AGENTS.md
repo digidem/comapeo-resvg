@@ -87,6 +87,11 @@ test result. `BENCH=1` at assemble time puts `bench.js` in its place.
   squash-merged, with the desktop, `mobile`, `package` and
   `changeset-check` jobs passing on an up-to-date branch. If you rename a
   CI job, update the ruleset's required checks too, or every PR is blocked.
+- Dependabot proposes npm, Cargo and GitHub Actions updates weekly, and
+  `changeset-check` skips its pull requests. A Cargo update changes the
+  prebuilds, so before merging one: run `scripts/notices.sh` (CI fails until
+  you do), follow the resvg steps under Bumping versions if it is resvg, and
+  add a patch changeset so it is released.
 - The simulator and emulator CI jobs are skipped on pull requests to save
   macOS minutes; they run on pushes to `main` and manual dispatch.
 

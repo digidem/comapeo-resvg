@@ -7,9 +7,15 @@ permissions:
   contents: read
 
 jobs:
-  # A required check. Skipped on the version PR, which counts as passing.
+  # A required check. Skipped on the version PR and on Dependabot's, which
+  # counts as passing; a dependency bump that should release gets a changeset
+  # added by hand.
   changeset-check:
-    if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
+    if: >-
+      ${{
+        !startsWith(github.head_ref, 'changeset-release/') &&
+        github.event.pull_request.user.login != 'dependabot[bot]'
+      }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
