@@ -193,11 +193,12 @@ test('repeated renders do not leak memory', { skip: updating }, async (t) => {
   const mb = (bytes) => (bytes / 1024 / 1024).toFixed(1)
   const external = samples.at(-1).external - samples[0].external
   const steps = samples.slice(1).map((s, i) => s.rss - samples[i].rss)
-  const median = steps.toSorted((a, b) => a - b)[2]
+  const big = steps.filter((step) => step >= 25 * 1024 * 1024).length
   t.diagnostic(`RSS change per batch: ${steps.map(mb).join(', ')} MB`)
   // A few of the last 1 MB PNGs may still be waiting for the garbage collector.
   assert.ok(external < 16 * 1024 * 1024, `PNG buffers grew by ${mb(external)} MB`)
-  // A leak grows RSS on every batch, but the allocator can also grab tens of MB once
-  // (glibc's per-thread arenas on Linux), so judge the median batch, not the total.
-  assert.ok(median < 10 * 1024 * 1024, `RSS grew by a median of ${mb(median)} MB per batch`)
+  // Allocators also move RSS by tens of MB, up or down (glibc's per-thread arenas, Windows
+  // trimming the working set, macOS compressing or swapping), so a single big batch or the
+  // total proves little. A leak shows as big growth in most batches.
+  assert.ok(big < 3, `RSS grew by 25 MB or more in ${big} of ${steps.length} batches`)
 })
