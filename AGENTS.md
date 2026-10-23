@@ -40,12 +40,14 @@ Generated and gitignored (safe to delete; the scripts recreate them):
   (`fetch-runtime.sh`).
 - `nodejs-project/` — the app payload the harness copies in
   (`assemble-project.sh`).
-- `.harness/` — copy of the test harness, written by the run scripts.
+- `node_modules/.cache/nodejs-mobile-test-harness/` — the harness's test
+  app copies and build output.
 
 ## Pipeline
 
 `fetch-runtime.sh` → `build.sh <target>` → `assemble-project.sh <target>` →
-`run-ios.sh` / `run-android.sh`. `build.sh host` alone is enough for
+`npx nodejs-mobile-test <ios|android> nodejs-project --runtime-dir
+vendor-runtime/<ios|android>`. `build.sh host` alone is enough for
 `npm test` and `npm run bench` on the host.
 
 `build.sh` ends with post-link checks (NodeMobile framework link and Mach-O
@@ -57,12 +59,13 @@ Prebuild directories are named `<platform>-<arch>` as node-gyp-build
 expects. The simulator reports `ios-arm64`, so `assemble-project.sh` puts
 the `ios-arm64-simulator` build in `prebuilds/ios-arm64/`.
 
-The run scripts need an iOS simulator or Android emulator and a
-`nodejs-mobile-bare-prebuilds` checkout at `../` or `HARNESS_REPO`. The
-harness runs `test.js` and prints a `__NODE_EXIT__:<code>` sentinel to the
-app's stdout; `run-ios.sh` watches for it itself, and `run-android.sh`
-leaves that to the harness's `run-test.sh`. Either way the exit code is the
-test result. `BENCH=1` at assemble time puts `bench.js` in its place.
+The device runs use the `nodejs-mobile-test-harness` devDependency
+(CLI `nodejs-mobile-test`) and need an iOS simulator or an Android emulator
+or device. It builds a test app around `nodejs-project/`, runs `test.js`
+(`--entry bench.js` for the benchmarks) and exits with node's exit code,
+which is the test result. Always pass `--runtime-dir vendor-runtime/<platform>`
+so the tests run on the nodejs-mobile build the prebuilds link against, not
+the harness's own default.
 
 ## Rules
 
@@ -111,7 +114,8 @@ Each version is set in more than one place; change all of them together:
 - cargo-about: `.github/workflows/ci.yml` and the header of
   `scripts/notices.sh`. If napi-rs changes its `LICENSE`, update the checksums
   in `scripts/about.toml`; `scripts/notices.sh` fails until then.
-- Test harness: the `nodejs-mobile-bare-prebuilds` ref in both CI test jobs.
+- Test harness: the exact `nodejs-mobile-test-harness` version in
+  `package.json` (and `package-lock.json`).
 - resvg's tests in `test/resvg/`: copy the same files from
   `crates/resvg/tests/tests/` at the new resvg tag, and the tag in the
   README's license section.
