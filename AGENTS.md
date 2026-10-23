@@ -83,8 +83,15 @@ test result. `BENCH=1` at assemble time puts `bench.js` in its place.
   `THIRD-PARTY-NOTICES.txt`; CI fails if it is out of date. A new crate
   under a license not in the `accepted` list in `scripts/about.toml` fails
   the script until the license is checked and added.
-- The simulator and emulator CI jobs are skipped on pull requests to save
-  macOS minutes; they run on pushes to `main` and manual dispatch.
+- `main` is protected by a ruleset: changes go through pull requests,
+  squash-merged, with every CI job and `changeset-check` passing on an
+  up-to-date branch. If you rename a
+  CI job, update the ruleset's required checks too, or every PR is blocked.
+- Dependabot proposes npm, Cargo and GitHub Actions updates weekly, and
+  `changeset-check` skips its pull requests. A Cargo update changes the
+  prebuilds, so before merging one: run `scripts/notices.sh` (CI fails until
+  you do), follow the resvg steps under Bumping versions if it is resvg, and
+  add a patch changeset so it is released.
 
 ## Bumping versions
 
@@ -113,8 +120,11 @@ Each version is set in more than one place; change all of them together:
 
 Releases use [changesets](https://github.com/changesets/changesets). Every
 pull request that changes what users get needs a changeset: run
-`npx changeset` and commit the file it writes. Never run `changeset version`
-by hand; the release workflow does it.
+`npx changeset` and commit the file it writes. A pull request that releases
+nothing (docs, CI, tests) needs `npx changeset --empty` instead. The
+`changeset-check` job fails a pull request without either, or one that edits
+`CHANGELOG.md`. Never run `changeset version` by hand; the release workflow
+does it.
 
 On each push to `main`, `release.yml` does one of two things:
 
@@ -129,7 +139,7 @@ On each push to `main`, `release.yml` does one of two things:
   token), and tags and creates a GitHub release.
 
 The version pull request is opened with the release-bot GitHub App's token
-(`RELEASE_BOT_APP_ID` variable, `RELEASE_BOT_PRIVATE_KEY` secret), because a
+(`RELEASE_BOT_CLIENT_ID` variable, `RELEASE_BOT_PRIVATE_KEY` secret), because a
 pull request opened with the default token doesn't trigger CI.
 
 ## Conventions
