@@ -84,7 +84,7 @@ test result. `BENCH=1` at assemble time puts `bench.js` in its place.
   under a license not in the `accepted` list in `scripts/about.toml` fails
   the script until the license is checked and added.
 - `main` is protected by a ruleset: changes go through pull requests,
-  squash-merged, with the desktop, `mobile`, `package` and
+  squash-merged, with the desktop, `mobile`, `device-tests`, `package` and
   `changeset-check` jobs passing on an up-to-date branch. If you rename a
   CI job, update the ruleset's required checks too, or every PR is blocked.
 - Dependabot proposes npm, Cargo and GitHub Actions updates weekly, and
@@ -93,7 +93,9 @@ test result. `BENCH=1` at assemble time puts `bench.js` in its place.
   you do), follow the resvg steps under Bumping versions if it is resvg, and
   add a patch changeset so it is released.
 - The simulator and emulator CI jobs are skipped on pull requests to save
-  macOS minutes; they run on pushes to `main` and manual dispatch.
+  macOS minutes, except the version PR, so a failure shows before a release
+  is approved rather than after. They also run on pushes to `main` and
+  manual dispatch. `device-tests` reports their result as one check.
 
 ## Bumping versions
 
